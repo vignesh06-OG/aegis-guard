@@ -27,6 +27,7 @@ from typing import Optional
 import numpy as np
 from watchdog.events import FileSystemEventHandler
 
+from .alert_manager import alerts_configured, send_critical_alert_async
 from .stasis_controller import find_writer_pid, freeze_threat
 from .vault_manager import VAULT_DIR_NAME, secure_file
 
@@ -151,14 +152,19 @@ class AegisHandler(FileSystemEventHandler):
         threshold: float = ENTROPY_THRESHOLD,
         auto_freeze: bool = True,
         auto_vault: bool = True,
+        alerts_enabled: bool = True,
     ) -> None:
         super().__init__()
         self.threshold = threshold
         self.auto_freeze = auto_freeze
         self.auto_vault = auto_vault
+        self.alerts_enabled = (
+            alerts_enabled and os.environ.get("AEGIS_ALERTS_ENABLED", "1") != "0"
+        )
 
         self.scan_count = 0
         self.threat_count = 0
+        self.alert_count = 0
         self.frozen_pids: set[int] = set()
 
         self._last_seen: dict[str, float] = {}
@@ -283,6 +289,29 @@ class AegisHandler(FileSystemEventHandler):
                 log_event("STASIS", f"PID {pid} SUSPENDED. Attack chain halted.")
             else:
                 log_event("FREEZE_FAILED", f"Could not suspend PID {pid}.")
+        else:
+            pid = None
+
+        # 3. Out-of-band alert: email the operator (non-blocking).
+        self._dispatch_alert(path, entropy, pid)
+
+    def _dispatch_alert(self, path: Path, entropy: float, pid: Optional[int]) -> None:
+        """Fire the emergency email on a daemon thread. Never blocks or raises."""
+        if not self.alerts_enabled:
+            return
+        if not alerts_configured():
+            log_event("ALERT", "SMTP not configured - email alert skipped.")
+            return
+
+        def _done(ok: bool, detail: str) -> None:
+            log_event("ALERT" if ok else "ERROR", detail)
+
+        log_event("ALERT", f"Dispatching CRITICAL email for {path.name}...")
+        try:
+            send_critical_alert_async(str(path), entropy, self.threshold, pid, _done)
+            self.alert_count += 1
+        except Exception as exc:
+            log_event("ERROR", f"Alert dispatch failed: {exc}")
 
     # -- introspection ----------------------------------------------------- #
 
@@ -291,4 +320,5 @@ class AegisHandler(FileSystemEventHandler):
             "scans": self.scan_count,
             "threats": self.threat_count,
             "frozen": len(self.frozen_pids),
+            "alerts": self.alert_count,
         }

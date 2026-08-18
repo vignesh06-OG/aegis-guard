@@ -1,260 +1,266 @@
-"""Project Aegis - SME Security Operations Dashboard (Streamlit).
+"""Project Aegis - SME Command Center (Streamlit).
 
-Run from the project root:
+Runs the REAL watchdog observer in-process. Start the watcher from the
+sidebar, launch ``attack_simulator.py`` in a second terminal, and watch the
+live entropy feed intercept the wave.
 
     streamlit run frontend/app.py
 """
 
 from __future__ import annotations
 
-import re
+import os
 import sys
 import time
+from collections import deque
 from pathlib import Path
 
 import streamlit as st
 
-# Allow `from core...` imports when Streamlit runs this file directly.
+# Allow "python -m streamlit run frontend/app.py" from the project root.
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.entropy_engine import ENTROPY_THRESHOLD, LOG_PATH  # noqa: E402
+from core.alert_manager import alerts_configured, send_critical_alert  # noqa: E402
+from core.entropy_engine import (  # noqa: E402
+    ENTROPY_THRESHOLD,
+    LOG_PATH,
+    AegisHandler,
+    log_event,
+)
 from core.vault_manager import purge_vault, restore_all, vault_status  # noqa: E402
 
+WATCH_PATH = Path(os.environ.get("AEGIS_WATCH_PATH", ROOT / "protected_data")).resolve()
+
+# --------------------------------------------------------------------------- #
+# Page shell + brutalist theme
+# --------------------------------------------------------------------------- #
+
 st.set_page_config(
-    page_title="Project Aegis | Ransomware Interception",
-    page_icon="🛡️",
+    page_title="AEGIS // Interception Console",
+    page_icon="\U0001F6E1",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# --------------------------------------------------------------------------- #
-# Theme
-# --------------------------------------------------------------------------- #
-
 st.markdown(
     """
     <style>
-      .stApp { background: #05070c; color: #c8d6e5; }
-      section[data-testid="stSidebar"] { background: #080b13; border-right: 1px solid #16202e; }
-      h1, h2, h3, h4 { color: #e6f1ff; font-family: "JetBrains Mono", monospace; letter-spacing: .04em; }
-      .aegis-status {
-        border-radius: 14px; padding: 34px 28px; text-align: center;
-        font-family: "JetBrains Mono", monospace; font-weight: 800;
-        font-size: 40px; letter-spacing: .12em; margin-bottom: 18px;
-      }
-      .secure { background: linear-gradient(135deg,#04150d,#062b19);
-                border: 1px solid #17b877; color: #3ffca4;
-                box-shadow: 0 0 42px rgba(23,184,119,.22); }
-      .breached { background: linear-gradient(135deg,#1b0407,#3a070f);
-                  border: 1px solid #ff3b52; color: #ff6b7d;
-                  box-shadow: 0 0 52px rgba(255,59,82,.34);
-                  animation: pulse 1.1s ease-in-out infinite; }
-      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.65} }
-      .aegis-sub { font-size: 14px; letter-spacing:.22em; font-weight:600; opacity:.75; margin-top:8px; }
-      .term {
-        background:#02040a; border:1px solid #16202e; border-radius:10px;
-        padding:16px; height:460px; overflow-y:auto;
-        font-family:"JetBrains Mono",monospace; font-size:12.5px; line-height:1.75;
-      }
-      .l-crit { color:#ff5566; font-weight:700; }
-      .l-stasis { color:#ffb020; font-weight:700; }
-      .l-vault { color:#33c7ff; }
-      .l-warn { color:#ffd166; }
-      .l-scan { color:#5c7a99; }
-      .l-boot { color:#8b5cf6; }
-      .l-info { color:#7f8ea3; }
-      .metric-card {
-        background:#080d16; border:1px solid #16202e; border-radius:12px; padding:16px 18px;
-      }
-      .metric-card .v { font-size:30px; font-weight:800; color:#e6f1ff;
-                        font-family:"JetBrains Mono",monospace; }
-      .metric-card .k { font-size:11px; letter-spacing:.18em; color:#5c7a99; text-transform:uppercase; }
-      div.stButton > button {
-        width:100%; border-radius:10px; font-weight:700; letter-spacing:.08em;
-        border:1px solid #17b877; background:#062b19; color:#3ffca4; padding:12px 0;
-      }
-      div.stButton > button:hover { background:#0a3d24; color:#7dffc4; border-color:#3ffca4; }
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@600;800&display=swap');
+      html, body, [class*="css"] { font-family: 'JetBrains Mono', monospace; }
+      .stApp { background: #000000; color: #e8e8e8; }
+      section[data-testid="stSidebar"] { background:#0a0a0a; border-right:1px solid #333; }
+      h1,h2,h3 { font-family:'Inter',system-ui,sans-serif !important; letter-spacing:-0.02em; }
+      .aegis-label { font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+                     color:#8a8a8a; font-family:'Inter',sans-serif; font-weight:600; }
+      .panel { border:1px solid #333; background:#111111; padding:14px 16px; }
+      .status-secure { border:1px solid #00ff66; background:#001a0b; color:#00ff66;
+                       padding:22px; font-size:30px; font-weight:700; letter-spacing:.06em; }
+      .status-threat { border:1px solid #ff003c; background:#1a0008; color:#ff003c;
+                       padding:22px; font-size:30px; font-weight:700; letter-spacing:.06em;
+                       animation: pulse 0.9s steps(2, jump-none) infinite; }
+      @keyframes pulse { 50% { background:#33000c; } }
+      .metric-v { font-size:26px; font-weight:700; color:#ffffff; }
+      .term { background:#000; border:1px solid #333; padding:12px; height:460px;
+              overflow-y:auto; font-size:12px; line-height:1.55; white-space:pre-wrap; }
+      .l-crit, .l-freeze { color:#ff003c; font-weight:700; }
+      .l-vault, .l-stasis { color:#00ff66; }
+      .l-scan { color:#8a8a8a; }
+      .l-alert { color:#ffb000; }
+      .l-boot { color:#5ac8fa; }
+      .stButton>button { border-radius:0 !important; border:1px solid #444;
+                         background:#111; color:#fff; font-family:'JetBrains Mono',monospace;
+                         letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
+      .stButton>button:hover { border-color:#00ff66; color:#00ff66; }
+      [data-testid="stMetricValue"] { font-family:'JetBrains Mono',monospace; }
+      hr { border-color:#333; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+
 # --------------------------------------------------------------------------- #
-# Log parsing
+# Observer lifecycle (real watchdog, kept in session state)
 # --------------------------------------------------------------------------- #
 
-LEVEL_CLASS = {
-    "CRITICAL_THREAT": "l-crit",
-    "FREEZE_FAILED": "l-crit",
-    "ERROR": "l-crit",
-    "STASIS": "l-stasis",
-    "VAULT": "l-vault",
-    "WARN": "l-warn",
-    "SCAN": "l-scan",
-    "BOOT": "l-boot",
-    "INFO": "l-info",
-}
-LINE_RE = re.compile(r"^\[(?P<time>[^\]]+)\]\s*\[(?P<level>[A-Z_]+)\]\s*(?P<msg>.*)$")
+def start_watcher(path: Path, threshold: float, freeze: bool, alerts: bool) -> None:
+    from watchdog.observers import Observer
+
+    if st.session_state.get("observer"):
+        return
+    path.mkdir(parents=True, exist_ok=True)
+    handler = AegisHandler(
+        threshold=threshold, auto_freeze=freeze, alerts_enabled=alerts
+    )
+    observer = Observer()
+    observer.schedule(handler, str(path), recursive=True)
+    observer.start()
+    st.session_state.observer = observer
+    st.session_state.handler = handler
+    log_event("BOOT", f"Dashboard watcher online. Monitoring: {path}")
+    log_event("BOOT", f"Threshold {threshold} bits/byte | freeze={freeze} | alerts={alerts}")
 
 
-def read_log(limit: int = 320) -> list[str]:
-    if not LOG_PATH.exists():
-        return []
+def stop_watcher() -> None:
+    observer = st.session_state.get("observer")
+    if observer:
+        observer.stop()
+        observer.join(timeout=3)
+        log_event("BOOT", "Dashboard watcher stood down.")
+    st.session_state.observer = None
+
+
+def tail_log(lines: int = 400) -> list[str]:
     try:
         with open(LOG_PATH, "r", encoding="utf-8", errors="replace") as handle:
-            return [ln.rstrip("\n") for ln in handle.readlines()][-limit:]
+            return list(deque(handle, maxlen=lines))
     except OSError:
         return []
 
 
-def render_terminal(lines: list[str]) -> str:
-    if not lines:
-        return (
-            '<div class="term"><span class="l-info">'
-            "no telemetry yet &mdash; start the watcher with "
-            "<b>python main.py</b></span></div>"
-        )
-    html = ['<div class="term">']
-    for line in lines:
-        match = LINE_RE.match(line)
-        if match:
-            cls = LEVEL_CLASS.get(match.group("level"), "l-info")
-            safe = match.group("msg").replace("<", "&lt;").replace(">", "&gt;")
-            html.append(
-                f'<div><span class="l-info">{match.group("time")}</span> '
-                f'<span class="{cls}">[{match.group("level")}]</span> '
-                f'<span class="{cls}">{safe}</span></div>'
-            )
-        else:
-            safe = line.replace("<", "&lt;").replace(">", "&gt;")
-            html.append(f'<div class="l-info">{safe}</div>')
-    html.append("</div>")
-    return "".join(html)
-
-
-def analyse(lines: list[str]) -> dict:
-    threats = sum(1 for ln in lines if "[CRITICAL_THREAT]" in ln)
-    scans = sum(1 for ln in lines if "[SCAN]" in ln)
-    frozen = sum(1 for ln in lines if "[STASIS]" in ln and "SUSPENDED" in ln)
-    peak = 0.0
-    for value in re.findall(r"H=(\d+\.\d+)", "\n".join(lines)):
-        peak = max(peak, float(value))
-    return {"threats": threats, "scans": scans, "frozen": frozen, "peak": peak}
+def colorize(line: str) -> str:
+    safe = line.replace("&", "&amp;").replace("<", "&lt;").rstrip()
+    upper = safe.upper()
+    for token, css in (
+        ("CRITICAL_THREAT", "l-crit"), ("FREEZE_FAILED", "l-freeze"),
+        ("ERROR", "l-crit"), ("STASIS", "l-stasis"), ("VAULT", "l-vault"),
+        ("ALERT", "l-alert"), ("WARN", "l-alert"), ("BOOT", "l-boot"),
+    ):
+        if f"[{token}]" in upper:
+            return f'<span class="{css}">{safe}</span>'
+    return f'<span class="l-scan">{safe}</span>'
 
 
 # --------------------------------------------------------------------------- #
-# Sidebar
+# Sidebar - control surface
 # --------------------------------------------------------------------------- #
 
-if "cleared_at" not in st.session_state:
-    st.session_state.cleared_at = 0
+st.sidebar.markdown('<div class="aegis-label">Aegis // Control</div>', unsafe_allow_html=True)
+watch_input = st.sidebar.text_input("Protected directory", str(WATCH_PATH))
+threshold = st.sidebar.slider("Entropy threshold (bits/byte)", 6.0, 8.0, ENTROPY_THRESHOLD, 0.01)
+freeze_on = st.sidebar.checkbox("Process stasis (suspend writer)", value=True)
+alerts_on = st.sidebar.checkbox("Email alerts", value=alerts_configured())
+auto_refresh = st.sidebar.checkbox("Live feed auto-refresh", value=True)
 
-with st.sidebar:
-    st.markdown("## 🛡️ AEGIS")
-    st.caption("Autonomous Early Ransomware Interception & Stasis System")
-    st.divider()
-    st.markdown(f"**Entropy threshold**  \n`{ENTROPY_THRESHOLD} bits/byte`")
-    st.markdown(f"**Log source**  \n`{LOG_PATH.name}`")
-    vault = vault_status()
-    st.markdown(f"**Shadow vault**  \n`{vault['count']} snapshot(s)`")
-    st.divider()
-    auto_refresh = st.toggle("Live tail", value=True)
-    interval = st.slider("Refresh (s)", 1, 10, 2)
-    st.divider()
-    if st.button("🧹 Purge vault"):
-        removed = purge_vault()
-        st.success(f"Removed {removed} snapshot(s).")
+running = st.session_state.get("observer") is not None
+col_a, col_b = st.sidebar.columns(2)
+if col_a.button("Start", disabled=running, use_container_width=True):
+    start_watcher(Path(watch_input).expanduser().resolve(), threshold, freeze_on, alerts_on)
+    st.rerun()
+if col_b.button("Stop", disabled=not running, use_container_width=True):
+    stop_watcher()
+    st.rerun()
 
-# --------------------------------------------------------------------------- #
-# Main
-# --------------------------------------------------------------------------- #
-
-log_lines = read_log()
-active_lines = log_lines[st.session_state.cleared_at:]
-stats = analyse(active_lines)
-breached = stats["threats"] > 0
-
-st.markdown("# PROJECT AEGIS")
-st.caption("Deterministic ransomware interception · Shannon entropy · no ML, no signatures")
-
-if breached:
-    st.markdown(
-        '<div class="aegis-status breached">🔴 THREAT INTERCEPTED &amp; FROZEN'
-        '<div class="aegis-sub">ENCRYPTION HALTED · PROCESS IN STASIS · '
-        'SHADOW VAULT ARMED</div></div>',
-        unsafe_allow_html=True,
-    )
+st.sidebar.markdown("---")
+st.sidebar.markdown('<div class="aegis-label">Alert channel</div>', unsafe_allow_html=True)
+if alerts_configured():
+    st.sidebar.success("SMTP configured", icon="✉")
+    if st.sidebar.button("Send test alert", use_container_width=True):
+        ok, detail = send_critical_alert(str(WATCH_PATH / "test.txt"), 7.99, threshold, None)
+        (st.sidebar.success if ok else st.sidebar.error)(detail)
 else:
-    st.markdown(
-        '<div class="aegis-status secure">🟢 SYSTEM SECURE'
-        '<div class="aegis-sub">ALL WRITE OPERATIONS WITHIN NOMINAL '
-        'ENTROPY BOUNDS</div></div>',
-        unsafe_allow_html=True,
-    )
+    st.sidebar.warning("SMTP not configured — copy .env.example to .env")
 
-c1, c2, c3, c4 = st.columns(4)
-for col, key, label in (
-    (c1, "scans", "Files scanned"),
-    (c2, "threats", "Threats intercepted"),
-    (c3, "frozen", "Processes frozen"),
-    (c4, "peak", "Peak entropy"),
-):
-    value = f"{stats[key]:.4f}" if key == "peak" else str(stats[key])
-    col.markdown(
-        f'<div class="metric-card"><div class="k">{label}</div>'
-        f'<div class="v">{value}</div></div>',
-        unsafe_allow_html=True,
-    )
+st.sidebar.markdown("---")
+st.sidebar.caption("Run the attack:\n\n`python attack_simulator.py`")
 
+# --------------------------------------------------------------------------- #
+# Header
+# --------------------------------------------------------------------------- #
+
+handler: AegisHandler | None = st.session_state.get("handler")
+stats = handler.stats() if handler else {"scans": 0, "threats": 0, "frozen": 0, "alerts": 0}
+vault = vault_status()
+threat_active = stats["threats"] > 0
+
+st.markdown(
+    f'<div class="aegis-label">Project Aegis &nbsp;//&nbsp; Autonomous Ransomware '
+    f'Interception &nbsp;//&nbsp; watching: {watch_input} &nbsp;//&nbsp; '
+    f'{"OBSERVER RUNNING" if running else "OBSERVER OFFLINE"}</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f'<div class="{"status-threat" if threat_active else "status-secure"}">'
+    f'{"🔴 THREAT INTERCEPTED &amp; FROZEN" if threat_active else "🟢 SYSTEM SECURE"}</div>',
+    unsafe_allow_html=True,
+)
 st.write("")
-left, right = st.columns([2.2, 1])
+
+m1, m2, m3, m4, m5 = st.columns(5)
+for column, label, value in (
+    (m1, "Files scanned", stats["scans"]),
+    (m2, "Threats intercepted", stats["threats"]),
+    (m3, "PIDs in stasis", stats["frozen"]),
+    (m4, "Vaulted snapshots", vault["count"]),
+    (m5, "Alerts sent", stats.get("alerts", 0)),
+):
+    column.markdown(
+        f'<div class="panel"><div class="aegis-label">{label}</div>'
+        f'<div class="metric-v">{value}</div></div>',
+        unsafe_allow_html=True,
+    )
+st.write("")
+
+# --------------------------------------------------------------------------- #
+# Body - live feed + response cards
+# --------------------------------------------------------------------------- #
+
+left, right = st.columns([2, 1], gap="medium")
 
 with left:
-    st.markdown("#### ▚ LIVE KERNEL WATCHER FEED")
-    st.markdown(render_terminal(active_lines[-140:]), unsafe_allow_html=True)
+    st.markdown('<div class="aegis-label">Live entropy stream // aegis.log</div>',
+                unsafe_allow_html=True)
+    lines = tail_log()
+    body = "<br>".join(colorize(l) for l in lines[-300:]) or \
+        '<span class="l-scan">// waiting for watcher events…</span>'
+    st.markdown(f'<div class="term">{body}</div>', unsafe_allow_html=True)
 
 with right:
-    st.markdown("#### ▚ RESPONSE CONSOLE")
-    if st.button("⚡ 1-CLICK PURGE & RESTORE"):
+    st.markdown('<div class="aegis-label">Process stasis</div>', unsafe_allow_html=True)
+    frozen = sorted(handler.frozen_pids) if handler else []
+    st.markdown(
+        f'<div class="panel">{"<br>".join(f"PID {p} — SUSPENDED" for p in frozen) or "No processes held."}</div>',
+        unsafe_allow_html=True,
+    )
+    st.write("")
+
+    st.markdown('<div class="aegis-label">Shadow vault</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="panel">{vault["count"]} snapshot(s) · '
+        f'{vault["total_bytes"]:,} bytes<br><span class="l-scan">{vault["vault_path"]}</span></div>',
+        unsafe_allow_html=True,
+    )
+    st.write("")
+
+    if st.button("⟲ 1-CLICK PURGE & RESTORE", use_container_width=True, type="primary"):
         result = restore_all()
-        st.session_state.cleared_at = len(log_lines)
-        if result["restored"]:
-            st.success(f"Restored {result['restored']} file(s) from the shadow vault.")
-            for name in result["files"]:
-                st.write(f"↩ {name}")
-        else:
-            st.info("Vault empty — nothing to restore. Status reset to secure.")
-        if result["failed"]:
-            st.warning(f"{result['failed']} file(s) could not be restored.")
+        log_event("VAULT", f"Operator restore: {result['restored']} restored, "
+                           f"{result['failed']} failed.")
+        if handler:
+            handler.threat_count = 0
+            handler.frozen_pids.clear()
+        st.success(f"Restored {result['restored']} file(s). System returned to SECURE.")
         time.sleep(0.6)
         st.rerun()
 
-    st.markdown("#### ▚ SHADOW VAULT")
+    with st.expander("Danger zone"):
+        if st.button("Empty shadow vault", use_container_width=True):
+            removed = purge_vault()
+            log_event("VAULT", f"Vault emptied: {removed} snapshot(s) discarded.")
+            st.rerun()
+
     if vault["entries"]:
+        st.markdown('<div class="aegis-label">Snapshot manifest</div>', unsafe_allow_html=True)
         st.dataframe(
             [
-                {
-                    "File": entry["name"],
-                    "Bytes": entry["size_bytes"],
-                    "Secured": entry["secured_at"].replace("T", " "),
-                }
-                for entry in vault["entries"]
+                {"file": e["name"], "bytes": e["size_bytes"], "secured": e["secured_at"]}
+                for e in vault["entries"]
             ],
-            use_container_width=True,
-            hide_index=True,
+            use_container_width=True, hide_index=True, height=220,
         )
-    else:
-        st.caption("No snapshots held.")
 
-    st.markdown("#### ▚ HOW TO DEMO")
-    st.code(
-        "python main.py --path ./monitored --presecure\n"
-        "python simulator/ransomware_sim.py --path ./monitored",
-        language="bash",
-    )
-
-if auto_refresh:
-    time.sleep(interval)
+if auto_refresh and running:
+    time.sleep(1.5)
     st.rerun()

@@ -9,6 +9,7 @@ filesystem event to the entropy engine.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -29,8 +30,8 @@ BANNER = r"""
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Project Aegis file watcher")
     parser.add_argument(
-        "--path", "-p", default="./monitored",
-        help="Directory to monitor (default: ./monitored)",
+        "--path", "-p", default=os.environ.get("AEGIS_WATCH_PATH", "./protected_data"),
+        help="Directory to monitor (default: ./protected_data)",
     )
     parser.add_argument(
         "--threshold", "-t", type=float, default=ENTROPY_THRESHOLD,
@@ -81,7 +82,8 @@ def main() -> int:
         log_event(
             "BOOT",
             f"Aegis offline. scans={stats['scans']} "
-            f"threats={stats['threats']} frozen={stats['frozen']}",
+            f"threats={stats['threats']} frozen={stats['frozen']} "
+            f"alerts={stats.get('alerts', 0)}",
         )
     return 0
 
