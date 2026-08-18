@@ -149,10 +149,20 @@ def send_critical_alert(
                 smtp.login(user, password)
                 smtp.send_message(message)
         else:
+            # SMTP_STARTTLS=0 supports local relays / MailHog / test sinks that
+            # speak plain SMTP. Real providers (Gmail, SES, Postmark) keep the
+            # default of 1 and always negotiate TLS before authenticating.
+            use_tls = _secret("SMTP_STARTTLS", "1") not in ("0", "false", "False")
             with smtplib.SMTP(host, port, timeout=timeout) as smtp:
                 smtp.ehlo()
-                smtp.starttls(context=context)
-                smtp.login(user, password)
+                if use_tls:
+                    smtp.starttls(context=context)
+                    smtp.ehlo()
+                if password:
+                    try:
+                        smtp.login(user, password)
+                    except smtplib.SMTPNotSupportedError:
+                        pass  # open local relay: no AUTH extension advertised
                 smtp.send_message(message)
         return True, f"Alert delivered to {recipient}"
     except smtplib.SMTPAuthenticationError:

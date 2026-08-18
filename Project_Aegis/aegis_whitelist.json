@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "kind": "extension",
+      "value": ".zip",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".gz",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".7z",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".rar",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".jpg",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".png",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".mp4",
+      "note": "compressed/media format"
+    },
+    {
+      "kind": "extension",
+      "value": ".pdf",
+      "note": "compressed/media format"
+    }
+  ]
+}

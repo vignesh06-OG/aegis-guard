@@ -28,6 +28,7 @@ import numpy as np
 from watchdog.events import FileSystemEventHandler
 
 from .alert_manager import alerts_configured, send_critical_alert_async
+from .whitelist_manager import describe, match_rule
 from .stasis_controller import find_writer_pid, freeze_threat
 from .vault_manager import VAULT_DIR_NAME, secure_file
 
@@ -226,6 +227,16 @@ class AegisHandler(FileSystemEventHandler):
         self.scan_count += 1
 
         if entropy >= self.threshold:
+            # Operator-managed trust list (files, folders, extensions, globs)
+            # is authoritative and is re-read from disk on every event.
+            rule = match_rule(path)
+            if rule is not None:
+                log_event(
+                    "INFO",
+                    f"High entropy {entropy:.4f} on {path.name} - TRUSTED "
+                    f"({describe(rule)}), ignoring.",
+                )
+                return entropy
             if path.suffix.lower() in BENIGN_HIGH_ENTROPY_EXT:
                 log_event(
                     "INFO",

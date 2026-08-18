@@ -139,13 +139,19 @@ Project_Aegis/
 │   ├── vault_manager.py       # .shadow_vault snapshots, manifest, restore_all()
 │   └── alert_manager.py       # smtplib CRITICAL email dispatch (non-blocking)
 ├── frontend/
-│   └── app.py                 # Streamlit command center (runs the real observer)
+│   ├── app.py                 # Streamlit command center (runs the real observer)
+│   ├── theme.py               # shared brutalist CSS + log colouriser
+│   └── pages/
+│       ├── 1_Whitelist.py     # trusted files / folders / extensions editor
+│       └── 2_Live_Demo.py     # one-click attack demo (entropy · stasis · vault)
+├── core/whitelist_manager.py  # persistent trust rules (aegis_whitelist.json)
 ├── simulator/
 │   └── ransomware_sim.py      # minimal legacy simulator
 ├── attack_simulator.py        # ⚔️ the full 10-file live demo attack
 ├── main.py                    # headless CLI watcher entry point
 ├── requirements.txt
 ├── .env.example               # SMTP + monitoring config template
+├── aegis_whitelist.json       # trust rules (auto-created, editable in the UI)
 └── protected_data/            # 🎯 the monitored directory (auto-created)
 ```
 
@@ -163,32 +169,97 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Configure email alerts (optional but impressive)
+### 📧 Configure the CRITICAL email alert
+
+Without SMTP credentials Aegis still intercepts, vaults and freezes — it just
+logs `SMTP not configured` instead of mailing you. Five minutes fixes that.
+
+**Step 1 — create the config file**
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env`:
+**Step 2 — get an app password (Gmail example)**
+
+1. Google Account → **Security** → turn on **2-Step Verification** (mandatory).
+2. Google Account → **Security** → **App passwords** → app: *Mail*, device: *Other → Aegis*.
+3. Copy the 16-character password. Spaces are fine; it is **not** your Google login password.
+
+**Step 3 — fill in `.env`**
 
 ```ini
 SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=aegis.sentinel@example.com
-SMTP_PASS=abcd efgh ijkl mnop        # Gmail App Password, NOT your login password
-ALERT_RECIPIENT=soc-oncall@example.com
-AEGIS_ALERTS_ENABLED=1
+SMTP_PORT=587                        # 587 = STARTTLS · 465 = implicit SSL
+SMTP_USER=you@gmail.com              # the mailbox that authenticates
+SMTP_PASS=abcd efgh ijkl mnop        # the 16-char App Password from step 2
+ALERT_SENDER=you@gmail.com           # usually identical to SMTP_USER
+ALERT_RECIPIENT=you@gmail.com        # where the CRITICAL alert lands
+AEGIS_ALERTS_ENABLED=1               # 0 mutes all outbound mail
+SMTP_STARTTLS=1                      # 0 only for local relays / MailHog
 ```
 
-> **Gmail:** enable 2-Factor Auth → Google Account → Security → *App passwords* → generate a 16-character password. Never commit `.env`.
-> **Streamlit alternative:** put the same keys in `.streamlit/secrets.toml` and Aegis reads them from `st.secrets`.
-> Offline demo? Set `AEGIS_ALERTS_ENABLED=0` and everything else still works.
+**Step 4 — verify before the demo**
+
+```bash
+streamlit run frontend/app.py
+```
+
+The sidebar shows **SMTP configured ✉**. Press **Send test alert** — a green
+`Alert delivered to <you>` confirms the channel. Check spam on the first send.
+
+**Other providers**
+
+| Provider | `SMTP_HOST` | `SMTP_PORT` | Password to use |
+| :--- | :--- | :--- | :--- |
+| Gmail / Workspace | `smtp.gmail.com` | `587` | App Password (2FA required) |
+| Outlook / M365 | `smtp.office365.com` | `587` | App Password |
+| Zoho Mail | `smtp.zoho.com` | `465` | App-specific password |
+| Amazon SES | `email-smtp.<region>.amazonaws.com` | `587` | SES SMTP credentials |
+| Brevo / SendGrid | `smtp-relay.brevo.com` / `smtp.sendgrid.net` | `587` | API key as the password |
+| MailHog (local test) | `127.0.0.1` | `1025` | anything, plus `SMTP_STARTTLS=0` |
+
+**Troubleshooting**
+
+| Log line | Fix |
+| :--- | :--- |
+| `SMTP credentials missing` | `.env` not loaded — run from the `Project_Aegis` folder, or export the vars in your shell. |
+| `SMTP auth rejected` | You used your login password instead of an App Password, or 2FA is off. |
+| `SMTPFailure: ... timed out` | Port 587 blocked by the network — try 465, or a hotspot. |
+| Mail sends but never arrives | Check spam; add `ALERT_SENDER` to your contacts. |
+
+> **Streamlit alternative:** put the same keys in `.streamlit/secrets.toml` and
+> Aegis reads them from `st.secrets` — handy for Streamlit Cloud deploys.
+
+---
+
+### 🧾 Trust whitelist
+
+Backup archives, media libraries and password vaults are high-entropy *by design*.
+Open the **Whitelist** page in the dashboard sidebar to exempt them:
+
+| Rule type | Example value | Effect |
+| :--- | :--- | :--- |
+| `folder` | `/home/me/backups` | everything under it, recursively |
+| `file` | `/home/me/vault.kdbx` | one exact path |
+| `extension` | `.zip` | every file with that suffix |
+| `glob` | `*_backup_*.bin` | fnmatch on path or filename |
+
+Rules persist to `aegis_whitelist.json` and the running watcher re-reads them on
+the very next filesystem event — no restart. Trusted hits are logged as
+`[INFO] High entropy 7.95 on borg_backup.bin - TRUSTED (folder: ...), ignoring.`
 
 ---
 
 ## 🎬 The 60-Second Demo
 
-Open **two terminals**.
+**Fastest path — the one-click demo page.** Run `streamlit run frontend/app.py`,
+open **Live Demo** in the sidebar, press **▶ RUN ATTACK SIMULATION**. It starts
+the real watcher, spawns `attack_simulator.py` as a real subprocess, and streams
+entropy, stasis and vault status live — then **⟲ 1-CLICK PURGE & RESTORE** rolls
+everything back. Ideal for judges.
+
+For the classic two-terminal version, open **two terminals**.
 
 **Terminal 1 — launch the command center:**
 
