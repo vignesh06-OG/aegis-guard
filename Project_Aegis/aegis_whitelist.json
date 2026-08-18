@@ -40,12 +40,6 @@
       "kind": "extension",
       "value": ".pdf",
       "note": "compressed/media format"
-    },
-    {
-      "kind": "folder",
-      "value": "/dev-server/Project_Aegis/protected_data/trusted_backups",
-      "note": "nightly backup archives",
-      "added_at": "2026-08-18T20:28:21"
     }
   ]
 }
