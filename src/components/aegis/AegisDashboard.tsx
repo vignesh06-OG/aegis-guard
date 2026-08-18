@@ -3,7 +3,7 @@ import { FileMatrix } from "./FileMatrix";
 import { TerminalFeed } from "./TerminalFeed";
 import { useAegisSimulation } from "./useAegisSimulation";
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Metric({ label, value, tone }: { label: string; value: string; tone?: string | undefined }) {
   return (
     <div className="rounded-lg border border-border bg-surface px-4 py-3.5">
       <p className="text-[10px] tracking-[0.18em] text-muted-foreground">{label}</p>
