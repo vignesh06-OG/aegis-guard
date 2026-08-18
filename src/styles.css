@@ -176,7 +176,17 @@
   background-image:
     linear-gradient(to right, var(--color-grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--color-grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-size: 32px 32px;
+}
+
+/* Industrial section label: tight sans, uppercase, hairline underline */
+@utility aegis-label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
 }
 
 
