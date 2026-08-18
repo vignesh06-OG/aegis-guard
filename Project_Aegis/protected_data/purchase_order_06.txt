@@ -1,0 +1,27 @@
+PURCHASE ORDER #2406
+====================================================
+Client       : Meridian Print Works
+Issued       : 2026-08-18
+Reference    : AEG-006-4158
+Marker       : AEGIS-SIMULATION-ARTIFACT
+
+Please find enclosed the summary of services rendered during the current billing period. All figures are quoted in local currency and exclude tax unless otherwise stated on the accompanying schedule.
+
+Staff training records have been updated and all certificates of completion are stored with the human resources department. A refresher session has been provisionally booked for the coming spring.
+
+Payment terms remain net thirty days from the date of issue. Late settlement may attract statutory interest as set out in the master services agreement signed by both parties last quarter.
+
+ITEMISED SCHEDULE
+----------------------------------------------------
+  01. Professional services, line item 1                729.87
+  02. Professional services, line item 2                796.90
+  03. Professional services, line item 3                587.33
+  04. Professional services, line item 4                141.61
+  05. Professional services, line item 5                236.49
+  06. Professional services, line item 6                740.97
+  07. Professional services, line item 7                967.35
+  08. Professional services, line item 8                600.29
+----------------------------------------------------
+  TOTAL DUE                                  4800.81
+
+This document is stored in a directory protected by Project Aegis. Any process that rewrites it with high-entropy content will be intercepted and suspended automatically.

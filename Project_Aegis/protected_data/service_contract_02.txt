@@ -1,0 +1,27 @@
+SERVICE CONTRACT #2402
+====================================================
+Client       : Kestrel Manufacturing
+Issued       : 2026-08-18
+Reference    : AEG-002-5979
+Marker       : AEGIS-SIMULATION-ARTIFACT
+
+Please find enclosed the summary of services rendered during the current billing period. All figures are quoted in local currency and exclude tax unless otherwise stated on the accompanying schedule.
+
+The quarterly review highlighted steady growth in recurring revenue, a modest reduction in operating expenditure, and an improvement in the average time taken to resolve customer support tickets.
+
+Staff training records have been updated and all certificates of completion are stored with the human resources department. A refresher session has been provisionally booked for the coming spring.
+
+ITEMISED SCHEDULE
+----------------------------------------------------
+  01. Professional services, line item 1                453.53
+  02. Professional services, line item 2                422.33
+  03. Professional services, line item 3                629.39
+  04. Professional services, line item 4                356.98
+  05. Professional services, line item 5                159.42
+  06. Professional services, line item 6                440.17
+  07. Professional services, line item 7                181.92
+  08. Professional services, line item 8                868.42
+----------------------------------------------------
+  TOTAL DUE                                  3512.16
+
+This document is stored in a directory protected by Project Aegis. Any process that rewrites it with high-entropy content will be intercepted and suspended automatically.
