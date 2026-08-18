@@ -28,6 +28,7 @@ import numpy as np
 from watchdog.events import FileSystemEventHandler
 
 from .alert_manager import alerts_configured, send_critical_alert_async
+from .whitelist_manager import describe, match_rule
 from .stasis_controller import find_writer_pid, freeze_threat
 from .vault_manager import VAULT_DIR_NAME, secure_file
 
