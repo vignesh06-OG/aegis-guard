@@ -65,12 +65,19 @@ export function AegisDashboard() {
           }`}
         >
           <p
-            className={`text-3xl font-black tracking-[0.14em] sm:text-5xl ${
+            className={`flex flex-wrap items-center justify-center gap-4 text-3xl font-black tracking-[0.14em] sm:text-5xl ${
               breached ? "text-threat" : "text-secure"
             }`}
           >
-            {breached ? "🔴 THREAT INTERCEPTED & FROZEN" : "🟢 SYSTEM SECURE"}
+            <span
+              className={`inline-block size-5 shrink-0 rounded-full sm:size-7 ${
+                breached ? "bg-threat" : "bg-secure"
+              }`}
+              aria-hidden="true"
+            />
+            {breached ? "THREAT INTERCEPTED & FROZEN" : "SYSTEM SECURE"}
           </p>
+
           <p className="mt-3 text-[11px] tracking-[0.24em] text-muted-foreground">
             {breached
               ? "ENCRYPTION HALTED · PROCESS IN STASIS · SHADOW VAULT ARMED"
