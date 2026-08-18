@@ -139,13 +139,19 @@ Project_Aegis/
 │   ├── vault_manager.py       # .shadow_vault snapshots, manifest, restore_all()
 │   └── alert_manager.py       # smtplib CRITICAL email dispatch (non-blocking)
 ├── frontend/
-│   └── app.py                 # Streamlit command center (runs the real observer)
+│   ├── app.py                 # Streamlit command center (runs the real observer)
+│   ├── theme.py               # shared brutalist CSS + log colouriser
+│   └── pages/
+│       ├── 1_Whitelist.py     # trusted files / folders / extensions editor
+│       └── 2_Live_Demo.py     # one-click attack demo (entropy · stasis · vault)
+├── core/whitelist_manager.py  # persistent trust rules (aegis_whitelist.json)
 ├── simulator/
 │   └── ransomware_sim.py      # minimal legacy simulator
 ├── attack_simulator.py        # ⚔️ the full 10-file live demo attack
 ├── main.py                    # headless CLI watcher entry point
 ├── requirements.txt
 ├── .env.example               # SMTP + monitoring config template
+├── aegis_whitelist.json       # trust rules (auto-created, editable in the UI)
 └── protected_data/            # 🎯 the monitored directory (auto-created)
 ```
 
