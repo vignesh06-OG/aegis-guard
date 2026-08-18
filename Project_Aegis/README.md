@@ -253,7 +253,13 @@ the very next filesystem event — no restart. Trusted hits are logged as
 
 ## 🎬 The 60-Second Demo
 
-Open **two terminals**.
+**Fastest path — the one-click demo page.** Run `streamlit run frontend/app.py`,
+open **Live Demo** in the sidebar, press **▶ RUN ATTACK SIMULATION**. It starts
+the real watcher, spawns `attack_simulator.py` as a real subprocess, and streams
+entropy, stasis and vault status live — then **⟲ 1-CLICK PURGE & RESTORE** rolls
+everything back. Ideal for judges.
+
+For the classic two-terminal version, open **two terminals**.
 
 **Terminal 1 — launch the command center:**
 
