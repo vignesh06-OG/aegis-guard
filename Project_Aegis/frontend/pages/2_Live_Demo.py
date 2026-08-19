@@ -86,11 +86,12 @@ def tail(lines: int = 300) -> list[str]:
 # Controls
 # --------------------------------------------------------------------------- #
 
-label("Project Aegis // Live demo harness // " + str(WATCH_PATH))
-st.title("Live Attack Demo")
+label("Project Aegis // Continuity demo harness // " + str(WATCH_PATH))
+st.title("Continuity Demo")
 st.caption(
-    "Runs the real watchdog engine against a real subprocess writing real "
-    "os.urandom payloads. Nothing here is mocked."
+    "Witness a live business-continuity event: a real subprocess writes real high-entropy bytes, "
+    "Aegis detects the mathematical signature, freezes the process, vaults the clean originals, "
+    "and restores operations with one click."
 )
 
 c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
@@ -135,7 +136,7 @@ threat = stats["threats"] > 0
 
 st.markdown(
     f'<div class="{"status-threat" if threat else "status-secure"}">'
-    f'{"🔴 THREAT INTERCEPTED &amp; FROZEN" if threat else "🟢 SYSTEM SECURE"}</div>',
+    f'{"🔴 BUSINESS CONTINUITY EVENT &amp; FROZEN" if threat else "🟢 OPERATIONS NORMAL"}</div>',
     unsafe_allow_html=True,
 )
 st.write("")
