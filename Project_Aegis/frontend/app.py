@@ -38,7 +38,7 @@ WATCH_PATH = Path(os.environ.get("AEGIS_WATCH_PATH", ROOT / "protected_data")).r
 # --------------------------------------------------------------------------- #
 
 st.set_page_config(
-    page_title="AEGIS // Interception Console",
+    page_title="AEGIS // Business Continuity Console",
     page_icon="\U0001F6E1",
     layout="wide",
     initial_sidebar_state="expanded",
