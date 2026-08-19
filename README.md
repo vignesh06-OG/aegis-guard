@@ -1,21 +1,33 @@
 <div align="center">
 
-![Aegis Banner](docs/banner.png)
+```text
+    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    ░░                                           ░░
+    ░░  █████╗ ███████╗ ██████╗ ██╗███████╗     ░░
+    ░░ ██╔══██╗██╔════╝██╔════╝ ██║██╔════╝     ░░
+    ░░ ███████║█████╗  ██║  ███╗██║███████╗     ░░
+    ░░ ██╔══██║██╔══╝  ██║   ██║██║╚════██║     ░░
+    ░░ ██║  ██║███████╗╚██████╔╝██║███████║      ░░
+    ░░ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝╚══════╝      ░░
+    ░░                                           ░░
+    ░░   AUTONOMOUS RANSOMWARE INTERCEPTION      ░░
+    ░░   & BUSINESS CONTINUITY ENGINE             ░░
+    ░░                                           ░░
+    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+```
 
-# 🛡️ PROJECT AEGIS
-
-### Autonomous Early Ransomware Interception & Stasis System
+![Status](https://img.shields.io/badge/Status-Active_Defense-000000?style=for-the-badge&labelColor=000000&color=00ff66)
+![Protection](https://img.shields.io/badge/Protection-Entropy--Based-000000?style=for-the-badge&labelColor=000000&color=ff003c)
+![Python](https://img.shields.io/badge/Python-3.11%2B-000000?style=for-the-badge&logo=python&logoColor=00ff66)
+![Watchdog](https://img.shields.io/badge/Watchdog-Realtime-000000?style=for-the-badge&labelColor=000000&color=ff003c)
+![psutil](https://img.shields.io/badge/psutil-Stasis-000000?style=for-the-badge&labelColor=000000&color=00ff66)
+![Streamlit](https://img.shields.io/badge/Streamlit-Console-000000?style=for-the-badge&logo=streamlit&logoColor=ff003c)
+![License](https://img.shields.io/badge/License-MIT-000000?style=for-the-badge&labelColor=000000&color=00ff66)
 
 **Not a smoke detector. A fire suppression system.**
 
 Aegis is a **Business Continuity Engine** — it doesn't just tell you that ransomware is running,
 it freezes the attacking process mid-write and restores your last clean bytes automatically.
-
-![Python](https://img.shields.io/badge/Python-3.11%2B-000000?style=flat-square&logo=python&logoColor=00ff66)
-![Watchdog](https://img.shields.io/badge/Watchdog-Realtime-000000?style=flat-square)
-![psutil](https://img.shields.io/badge/psutil-Stasis-000000?style=flat-square)
-![Streamlit](https://img.shields.io/badge/Streamlit-Console-000000?style=flat-square&logo=streamlit&logoColor=ff003c)
-![License](https://img.shields.io/badge/License-MIT-000000?style=flat-square)
 
 Built in-house by **Team Aegis**.
 
