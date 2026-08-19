@@ -176,14 +176,24 @@ vault = vault_status()
 threat_active = stats["threats"] > 0
 
 st.markdown(
-    f'<div class="aegis-label">Project Aegis &nbsp;//&nbsp; Autonomous Ransomware '
-    f'Interception &nbsp;//&nbsp; watching: {watch_input} &nbsp;//&nbsp; '
+    f'<div class="aegis-label">Project Aegis &nbsp;//&nbsp; Autonomous Business Continuity Engine '
+    f'&nbsp;//&nbsp; watching: {watch_input} &nbsp;//&nbsp; '
     f'{"OBSERVER RUNNING" if running else "OBSERVER OFFLINE"}</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
     f'<div class="{"status-threat" if threat_active else "status-secure"}">'
-    f'{"🔴 THREAT INTERCEPTED &amp; FROZEN" if threat_active else "🟢 SYSTEM SECURE"}</div>',
+    f'{"🔴 BUSINESS CONTINUITY EVENT &amp; FROZEN" if threat_active else "🟢 OPERATIONS NORMAL"}</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<div style='max-width:780px; color:#8a8a8a; font-size:13px; line-height:1.55; "
+    "margin:18px 0 6px 0; font-family:\'Inter\',system-ui,sans-serif;'>"
+    "<strong style='color:#e8e8e8;'>Mission:</strong> "
+    "Every other tool acts as a smoke detector — alerting you when the house is already on fire. "
+    "Aegis is an active fire-suppression system: we mathematically detect the fire (Entropy), "
+    "freeze the oxygen (Thread Stasis), and rebuild the assets (Shadow Vault) before operations are impacted."
+    "</div>",
     unsafe_allow_html=True,
 )
 st.write("")
