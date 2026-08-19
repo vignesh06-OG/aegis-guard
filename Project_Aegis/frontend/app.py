@@ -164,7 +164,7 @@ else:
     st.sidebar.warning("SMTP not configured — copy .env.example to .env")
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Run the attack:\n\n`python attack_simulator.py`")
+st.sidebar.caption("Validate continuity:\n\n`python attack_simulator.py`")
 
 # --------------------------------------------------------------------------- #
 # Header
