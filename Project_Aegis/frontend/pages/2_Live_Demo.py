@@ -37,7 +37,7 @@ from frontend.theme import colorize, inject_theme, label  # noqa: E402
 WATCH_PATH = ROOT / "protected_data"
 SIMULATOR = ROOT / "attack_simulator.py"
 
-st.set_page_config(page_title="AEGIS // Live Demo", page_icon="\U0001F6E1", layout="wide")
+st.set_page_config(page_title="AEGIS // Continuity Demo", page_icon="\U0001F6E1", layout="wide")
 inject_theme()
 
 
@@ -86,11 +86,12 @@ def tail(lines: int = 300) -> list[str]:
 # Controls
 # --------------------------------------------------------------------------- #
 
-label("Project Aegis // Live demo harness // " + str(WATCH_PATH))
-st.title("Live Attack Demo")
+label("Project Aegis // Continuity demo harness // " + str(WATCH_PATH))
+st.title("Continuity Demo")
 st.caption(
-    "Runs the real watchdog engine against a real subprocess writing real "
-    "os.urandom payloads. Nothing here is mocked."
+    "Witness a live business-continuity event: a real subprocess writes real high-entropy bytes, "
+    "Aegis detects the mathematical signature, freezes the process, vaults the clean originals, "
+    "and restores operations with one click."
 )
 
 c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
@@ -135,18 +136,18 @@ threat = stats["threats"] > 0
 
 st.markdown(
     f'<div class="{"status-threat" if threat else "status-secure"}">'
-    f'{"🔴 THREAT INTERCEPTED &amp; FROZEN" if threat else "🟢 SYSTEM SECURE"}</div>',
+    f'{"🔴 BUSINESS CONTINUITY EVENT &amp; FROZEN" if threat else "🟢 OPERATIONS NORMAL"}</div>',
     unsafe_allow_html=True,
 )
 st.write("")
 
 m = st.columns(5)
 for column, name, value in (
-    (m[0], "Files scanned", stats["scans"]),
-    (m[1], "Threats intercepted", stats["threats"]),
-    (m[2], "PIDs in stasis", stats["frozen"]),
-    (m[3], "Vaulted snapshots", vault["count"]),
-    (m[4], "Alerts sent", stats.get("alerts", 0)),
+    (m[0], "Assets monitored", stats["scans"]),
+    (m[1], "Continuity events", stats["threats"]),
+    (m[2], "Processes frozen", stats["frozen"]),
+    (m[3], "Shadow snapshots", vault["count"]),
+    (m[4], "Alerts dispatched", stats.get("alerts", 0)),
 ):
     column.markdown(
         f'<div class="panel"><div class="aegis-label">{name}</div>'

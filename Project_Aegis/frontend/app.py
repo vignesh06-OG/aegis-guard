@@ -38,7 +38,7 @@ WATCH_PATH = Path(os.environ.get("AEGIS_WATCH_PATH", ROOT / "protected_data")).r
 # --------------------------------------------------------------------------- #
 
 st.set_page_config(
-    page_title="AEGIS // Interception Console",
+    page_title="AEGIS // Business Continuity Console",
     page_icon="\U0001F6E1",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -164,7 +164,7 @@ else:
     st.sidebar.warning("SMTP not configured — copy .env.example to .env")
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Run the attack:\n\n`python attack_simulator.py`")
+st.sidebar.caption("Validate continuity:\n\n`python attack_simulator.py`")
 
 # --------------------------------------------------------------------------- #
 # Header
@@ -176,25 +176,35 @@ vault = vault_status()
 threat_active = stats["threats"] > 0
 
 st.markdown(
-    f'<div class="aegis-label">Project Aegis &nbsp;//&nbsp; Autonomous Ransomware '
-    f'Interception &nbsp;//&nbsp; watching: {watch_input} &nbsp;//&nbsp; '
+    f'<div class="aegis-label">Project Aegis &nbsp;//&nbsp; Autonomous Business Continuity Engine '
+    f'&nbsp;//&nbsp; watching: {watch_input} &nbsp;//&nbsp; '
     f'{"OBSERVER RUNNING" if running else "OBSERVER OFFLINE"}</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
     f'<div class="{"status-threat" if threat_active else "status-secure"}">'
-    f'{"🔴 THREAT INTERCEPTED &amp; FROZEN" if threat_active else "🟢 SYSTEM SECURE"}</div>',
+    f'{"🔴 BUSINESS CONTINUITY EVENT &amp; FROZEN" if threat_active else "🟢 OPERATIONS NORMAL"}</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<div style='max-width:780px; color:#8a8a8a; font-size:13px; line-height:1.55; "
+    "margin:18px 0 6px 0; font-family:\'Inter\',system-ui,sans-serif;'>"
+    "<strong style='color:#e8e8e8;'>Mission:</strong> "
+    "Every other tool acts as a smoke detector — alerting you when the house is already on fire. "
+    "Aegis is an active fire-suppression system: we mathematically detect the fire (Entropy), "
+    "freeze the oxygen (Thread Stasis), and rebuild the assets (Shadow Vault) before operations are impacted."
+    "</div>",
     unsafe_allow_html=True,
 )
 st.write("")
 
 m1, m2, m3, m4, m5 = st.columns(5)
 for column, label, value in (
-    (m1, "Files scanned", stats["scans"]),
-    (m2, "Threats intercepted", stats["threats"]),
-    (m3, "PIDs in stasis", stats["frozen"]),
-    (m4, "Vaulted snapshots", vault["count"]),
-    (m5, "Alerts sent", stats.get("alerts", 0)),
+    (m1, "Assets monitored", stats["scans"]),
+    (m2, "Continuity events", stats["threats"]),
+    (m3, "Processes frozen", stats["frozen"]),
+    (m4, "Shadow snapshots", vault["count"]),
+    (m5, "Alerts dispatched", stats.get("alerts", 0)),
 ):
     column.markdown(
         f'<div class="panel"><div class="aegis-label">{label}</div>'
