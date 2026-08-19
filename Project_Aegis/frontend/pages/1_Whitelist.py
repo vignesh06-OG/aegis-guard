@@ -29,15 +29,14 @@ from core.whitelist_manager import (  # noqa: E402
 )
 from frontend.theme import inject_theme, label  # noqa: E402
 
-st.set_page_config(page_title="AEGIS // Whitelist", page_icon="\U0001F6E1", layout="wide")
+st.set_page_config(page_title="AEGIS // Trust Whitelist", page_icon="\U0001F6E1", layout="wide")
 inject_theme()
 
 label("Project Aegis // Trust whitelist // rules file: " + str(WHITELIST_PATH))
 st.title("Trust Whitelist")
 st.caption(
-    "Anything matched here is exempt from the 7.85 bits/byte interception rule. "
-    "Use it for backup archives, media libraries, encrypted password vaults and "
-    "database files that are high-entropy by design."
+    "Protect operational uptime by exempting legitimate high-entropy assets — backup archives, "
+    "media libraries, encrypted password vaults and database files — from the entropy interception rule."
 )
 
 # --------------------------------------------------------------------------- #

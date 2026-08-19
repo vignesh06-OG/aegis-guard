@@ -143,11 +143,11 @@ st.write("")
 
 m = st.columns(5)
 for column, name, value in (
-    (m[0], "Files scanned", stats["scans"]),
-    (m[1], "Threats intercepted", stats["threats"]),
-    (m[2], "PIDs in stasis", stats["frozen"]),
-    (m[3], "Vaulted snapshots", vault["count"]),
-    (m[4], "Alerts sent", stats.get("alerts", 0)),
+    (m[0], "Assets monitored", stats["scans"]),
+    (m[1], "Continuity events", stats["threats"]),
+    (m[2], "Processes frozen", stats["frozen"]),
+    (m[3], "Shadow snapshots", vault["count"]),
+    (m[4], "Alerts dispatched", stats.get("alerts", 0)),
 ):
     column.markdown(
         f'<div class="panel"><div class="aegis-label">{name}</div>'
