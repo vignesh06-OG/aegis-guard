@@ -37,7 +37,7 @@ from frontend.theme import colorize, inject_theme, label  # noqa: E402
 WATCH_PATH = ROOT / "protected_data"
 SIMULATOR = ROOT / "attack_simulator.py"
 
-st.set_page_config(page_title="AEGIS // Live Demo", page_icon="\U0001F6E1", layout="wide")
+st.set_page_config(page_title="AEGIS // Continuity Demo", page_icon="\U0001F6E1", layout="wide")
 inject_theme()
 
 
